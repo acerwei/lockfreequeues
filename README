@@ -8,14 +8,15 @@ Memory Types:
     - IPC (inter-process comunication): shared-memory IPC; consumer and producer in different processes but the same machine.
 
 Test:
-    - the cpp files.
+    - the cpp files in tests folder.
 
 TO IMPROVE
-    - Template the cpp files
+    - Template the test programs.
+    - A mini IPC initializer/manager (eg. init, clear, remove) rather than doing the management in consumer/producer test programs.
     - Code sharing in the LockFree Queues.
     - Error / Exception handling
     - MPMC: similar to SPMC
     - MemType_FileShare: shared-file IPC.
   
 
--Author: Acer Wei (魏沐风) acer.king.wei@gmail.com
+- Author: Jing Wei (魏沐风) acer.king.wei@gmail.com
