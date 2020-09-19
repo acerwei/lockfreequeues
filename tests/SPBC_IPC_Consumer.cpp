@@ -2,7 +2,7 @@
     CopyRight (c) acer.king.wei@gmail.com 2019
 */
 
-#include "SPMC.h"
+#include "../headers/SPBC.h"
 using namespace std;
 
 int main(int argc, char **argv)
@@ -20,9 +20,8 @@ int main(int argc, char **argv)
     cout<<"Topic = "<<argv[1]<<", Pid = "<< argv[2]<<",MaxReaders = " <<n <<", BuffSize = "<<bufSize<<endl;
     cout<<"My Reader ID is "<<rid<<endl;
     //
-    SPMC<MemType_IPC> *shipc = new SPMC<MemType_IPC>(argv[1], (char)(pid&0xff), n, bufSize);
+    SPBC<MemType_IPC> *shipc = new SPBC<MemType_IPC>(argv[1], (char)(pid&0xff), n, bufSize);
     shipc->start(rid);
-    int received = 0;
     if (argc>=7 && !strcmp(argv[6], "int"))
     {
         int val;
@@ -51,9 +50,8 @@ int main(int argc, char **argv)
                 std::this_thread::sleep_for(chrono::nanoseconds(1));
             else
             {
-                received++;
                 buf[len] = '\0';
-                cout<<buf<<" "<<len<<" "<<received<<endl;
+                cout<<buf<<" "<<len<<endl;
             }
         }
     }

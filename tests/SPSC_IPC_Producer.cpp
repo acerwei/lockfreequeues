@@ -2,7 +2,7 @@
     CopyRight (c) acer.king.wei@gmail.com 2019
 */
 
-#include "SPSC.h"
+#include "../headers/SPSC.h"
 using namespace std;
 
 int main(int argc, char **argv)

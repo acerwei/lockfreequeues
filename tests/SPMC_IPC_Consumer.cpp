@@ -2,28 +2,33 @@
     CopyRight (c) acer.king.wei@gmail.com 2019
 */
 
-#include "SPSC.h"
+#include "../headers/SPMC.h"
 using namespace std;
 
 int main(int argc, char **argv)
 {
-    if (argc<4)
+    if (argc<6)
     {
         cout<<"Error!!"<<endl;
-        cout<<"Format: bin Topic Pid BuffSize"<<endl;
+        cout<<"Format: bin Topic Pid MaxReaders BuffSize "<<endl;
         exit(0);
     }
     int pid = std::atoi(argv[2]);
-    int bufSize = std::atoi(argv[3]);
-    cout<<"Topic = "<<argv[1]<<", Pid = "<< argv[2]<<", BuffSize = "<<bufSize<<endl;
+    int n = std::atoi(argv[3]);
+    int bufSize = std::atoi(argv[4]);
+    int rid = std::atoi(argv[5]);
+    cout<<"Topic = "<<argv[1]<<", Pid = "<< argv[2]<<",MaxReaders = " <<n <<", BuffSize = "<<bufSize<<endl;
+    cout<<"My Reader ID is "<<rid<<endl;
     //
-    SPSC<MemType_IPC> *shipc = new SPSC<MemType_IPC>(argv[1], (char)(pid&0xff), bufSize);
-    if (argc>=5 && !strcmp(argv[4], "int"))
+    SPMC<MemType_IPC> *shipc = new SPMC<MemType_IPC>(argv[1], (char)(pid&0xff), n, bufSize);
+    shipc->start(rid);
+    int received = 0;
+    if (argc>=7 && !strcmp(argv[6], "int"))
     {
         int val;
         while (true)
         {
-            size_t len = shipc->pop(val);
+            size_t len = shipc->pop(rid, val);
             if (!len)
                 std::this_thread::sleep_for(chrono::nanoseconds(1));
             else
@@ -34,20 +39,21 @@ int main(int argc, char **argv)
     }
     else
     {
-        if (argc>=5 && !strcmp(argv[4], "keepup"))
+        if (argc>=7 && !strcmp(argv[6], "keepup"))
         {
-            shipc->keep_up();
+            shipc->keep_up(rid);
         }
         char buf[64];
         while (true)
         {
-            size_t len = shipc->pop(buf);
+            size_t len = shipc->pop(rid, buf);
             if (!len)
                 std::this_thread::sleep_for(chrono::nanoseconds(1));
             else
             {
+                received++;
                 buf[len] = '\0';
-                cout<<buf<<" "<<len<<endl;
+                cout<<buf<<" "<<len<<" "<<received<<endl;
             }
         }
     }

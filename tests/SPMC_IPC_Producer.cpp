@@ -2,7 +2,7 @@
     CopyRight (c) acer.king.wei@gmail.com 2019
 */
 
-#include "SPBC.h"
+#include "../headers/SPMC.h"
 using namespace std;
 
 int main(int argc, char **argv)
@@ -18,7 +18,7 @@ int main(int argc, char **argv)
     int bufSize = std::atoi(argv[4]);
     cout<<"Topic = "<<argv[1]<<", Pid = "<< argv[2]<<",MaxReaders = " <<n <<", BuffSize = "<<bufSize<<endl;
     //
-    SPBC<MemType_IPC> *shipc = new SPBC<MemType_IPC>(argv[1], (char)(pid&0xff), n, bufSize);
+    SPMC<MemType_IPC> *shipc = new SPMC<MemType_IPC>(argv[1], (char)(pid&0xff), n, bufSize);
     if (argc>=6 && !strcmp(argv[5], "remove"))
     {
         shipc->remove();
