@@ -1,0 +1,21 @@
+Lock Free Queues:
+    - SPSC.h: Single Producer Single Consumer
+    - SPBC.h: Single Producer Broadcast
+    - SPMC.h: Single Producer Multiple Consumer
+
+Memory Types:
+    - SingleProcess: consumer and producer in the same process but different threads.
+    - IPC (inter-process comunication): shared-memory IPC; consumer and producer in different processes but the same machine.
+
+Test:
+    - the cpp files.
+
+TO IMPROVE
+    - Template the cpp files
+    - Code sharing in the LockFree Queues.
+    - Error / Exception handling
+    - MPMC: similar to SPMC
+    - MemType_FileShare: shared-file IPC.
+  
+
+-Author: Acer Wei (魏沐风) acer.king.wei@gmail.com
