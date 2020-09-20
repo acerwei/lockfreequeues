@@ -18,7 +18,7 @@ int main(int argc, char **argv)
     int bufSize = std::atoi(argv[4]);
     cout<<"Topic = "<<argv[1]<<", Pid = "<< argv[2]<<",MaxReaders = " <<n <<", BuffSize = "<<bufSize<<endl;
     //
-    SPMC<MemType_IPC> *shipc = new SPMC<MemType_IPC>(argv[1], (char)(pid&0xff), n, bufSize);
+    SPMC<MemType_IPC, double> *shipc = new SPMC<MemType_IPC, double>(argv[1], (char)(pid&0xff), n, bufSize);
     if (argc>=6 && !strcmp(argv[5], "remove"))
     {
         shipc->remove();
@@ -28,28 +28,16 @@ int main(int argc, char **argv)
     {
         shipc->clear();
     }
-    string str;
+
+    double val;
     while (true)
     {
-        cin>>str;
-        int val = std::atoi(str.c_str());
-        if (!val)
+        cin>>val;
+        while (!shipc->push(val))
         {
-            while (!shipc->push(str.length(), str.c_str()))
-            {
-                std::this_thread::sleep_for(chrono::nanoseconds(1));
-            }
-            printf("sent %lu bytes\n", str.length());
+            std::this_thread::sleep_for(chrono::nanoseconds(1));
         }
-        else
-        {
-            while (!shipc->push(val))
-            {
-                std::this_thread::sleep_for(chrono::nanoseconds(1));
-            }
-            printf("sent int\n");
-        }
-        
+        printf("sent item\n");
     }
     delete shipc;
     std::this_thread::sleep_for(chrono::seconds(1));

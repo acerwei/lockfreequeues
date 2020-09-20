@@ -1,7 +1,7 @@
 Lock Free Queues:
     - SPSC.h: Single Producer Single Consumer
     - SPBC.h: Single Producer Broadcast
-    - SPMC.h: Single Producer Multiple Consumer
+    - SPMC.h: Single Producer Multiple Consumer (uniform item structure))
 
 Memory Types:
     - SingleProcess: consumer and producer in the same process but different threads.

@@ -20,42 +20,23 @@ int main(int argc, char **argv)
     cout<<"Topic = "<<argv[1]<<", Pid = "<< argv[2]<<",MaxReaders = " <<n <<", BuffSize = "<<bufSize<<endl;
     cout<<"My Reader ID is "<<rid<<endl;
     //
-    SPMC<MemType_IPC> *shipc = new SPMC<MemType_IPC>(argv[1], (char)(pid&0xff), n, bufSize);
+    SPMC<MemType_IPC, double> *shipc = new SPMC<MemType_IPC, double>(argv[1], (char)(pid&0xff), n, bufSize);
     shipc->start(rid);
     int received = 0;
-    if (argc>=7 && !strcmp(argv[6], "int"))
+    double val = 0;
+    while (true)
     {
-        int val;
-        while (true)
+        size_t len = shipc->pop(rid, val);
+        if (len)
         {
-            size_t len = shipc->pop(rid, val);
-            if (!len)
-                std::this_thread::sleep_for(chrono::nanoseconds(1));
-            else
-            {
-                cout<<val<<endl;
-            }
+            received++;
+            cout<<val<<" "<<received<<endl;
         }
-    }
-    else
-    {
-        if (argc>=7 && !strcmp(argv[6], "keepup"))
+        else
         {
-            shipc->keep_up(rid);
+            std::this_thread::sleep_for(chrono::nanoseconds(1));
         }
-        char buf[64];
-        while (true)
-        {
-            size_t len = shipc->pop(rid, buf);
-            if (!len)
-                std::this_thread::sleep_for(chrono::nanoseconds(1));
-            else
-            {
-                received++;
-                buf[len] = '\0';
-                cout<<buf<<" "<<len<<" "<<received<<endl;
-            }
-        }
+        
     }
     
     delete shipc;

@@ -91,7 +91,7 @@ template <>
 class SPSC<MemType_SingleProcess> : public SPSCBase
 {
 public:
-    SPSC(int _size, int _tailer)
+    SPSC(int _size, int _tailer=DefaultTailerSize)
     {
         size = _size;
         tailer = _tailer;
@@ -128,7 +128,7 @@ protected:
 
 public:
     
-    SPSC(const char* _name, const char _pid, const int _size, const int _tailer=32):
+    SPSC(const char* _name, const char _pid, const int _size, const int _tailer=DefaultTailerSize):
         name(_name), pid(_pid)
     {
         size = _size;
@@ -151,7 +151,7 @@ public:
     {
         key = ftok(name.c_str(), pid);
         assert(key!=-1);
-        shmid = shmget(key, size+tailer+sizeof(int)*2, 0666 | IPC_CREAT);
+        shmid = shmget(key, size+tailer+sizeof(long long)*2, 0666 | IPC_CREAT);
         assert(shmid!=-1);
         shdata = (char*) shmat(shmid, nullptr, 0);
         assert(shdata);

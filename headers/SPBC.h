@@ -77,6 +77,8 @@ public:
         printf("SPBC started, write_pos=%lld, read_pos=%lld\n", *write_pos, readers[rid]);
         long long start_pos = ((*write_pos) & (~mask));
         // reader missed too much.
+        // potential problem when lagging exactly one buf_size behind.
+        // better to call keep_up(rid) right after start.
         if (start_pos>readers[rid])
         {
             readers[rid] = start_pos;
@@ -107,7 +109,7 @@ template <>
 class SPBC<MemType_SingleProcess> : public SPBCBase
 {
 public:
-    SPBC(int _size, int _max_readers, int _tailer)
+    SPBC(int _size, int _max_readers, int _tailer=DefaultTailerSize)
     {
         size = _size;
         max_readers = _max_readers;
@@ -145,7 +147,7 @@ protected:
 
 public:
     
-    SPBC(const char* _name, const char _pid, int _max_readers, const int _size, const int _tailer=32):
+    SPBC(const char* _name, const char _pid, int _max_readers, const int _size, const int _tailer=DefaultTailerSize):
         name(_name), pid(_pid)
     {
         size = _size;
@@ -169,7 +171,7 @@ public:
     {
         key = ftok(name.c_str(), pid);
         assert(key!=-1);
-        shmid = shmget(key, size+tailer+sizeof(int)*(max_readers+1), 0666 | IPC_CREAT);
+        shmid = shmget(key, size+tailer+sizeof(long long)*(max_readers+1), 0666 | IPC_CREAT);
         assert(shmid!=-1);
         shdata = (char*) shmat(shmid, nullptr, 0);
         assert(shdata);
