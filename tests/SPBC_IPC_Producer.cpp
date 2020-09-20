@@ -2,7 +2,7 @@
     CopyRight (c) acer.king.wei@gmail.com 2019
 */
 
-#include "../headers/"
+#include "../headers/SPBC.h"
 using namespace std;
 
 int main(int argc, char **argv)
