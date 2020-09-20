@@ -55,6 +55,13 @@ public:
         assert(buf);
         if (readers[rid] >= *write_pos)
             return 0;
+        long long start_pos = ((*write_pos) & (~mask));
+        if (readers[rid]<start_pos)
+        {
+            printf("SPBC lagged, should call keepup, start_pos=%lld, write_pos=%lld, read_pos=%lld, lost=%lld\n", start_pos, *write_pos, readers[rid], start_pos-readers[rid]);
+            keep_up(rid);
+            return 0;
+        }
         int len = 0;
         memmove(&len, data + (readers[rid]&mask), LenBytes);
         memmove(buf, data + ((readers[rid]+LenBytes)&mask), len);

@@ -38,9 +38,15 @@ int main(int argc, char **argv)
     }
     else
     {
+        bool wait = false;
+        int received = 0;
         if (argc>=7 && !strcmp(argv[6], "keepup"))
         {
             shipc->keep_up(rid);
+        }
+        if (argc>=7 && !strcmp(argv[6], "wait"))
+        {
+            wait = true;
         }
         char buf[64];
         while (true)
@@ -50,8 +56,11 @@ int main(int argc, char **argv)
                 std::this_thread::sleep_for(chrono::nanoseconds(1));
             else
             {
+                received++;
                 buf[len] = '\0';
-                cout<<buf<<" "<<len<<endl;
+                cout<<buf<<" "<<len<<" "<<received<<endl;
+                if (wait)
+                    std::this_thread::sleep_for(chrono::microseconds(1));
             }
         }
     }
