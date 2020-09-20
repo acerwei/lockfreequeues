@@ -160,13 +160,6 @@ public:
         read_pos = (long long*) (shdata + sizeof(long long));
         data = shdata + sizeof(long long)*2;
         printf("IPC SPSC started, write_pos=%lld, read_pos=%lld\n", *write_pos, *read_pos);
-        // reader missed too much.
-        long long start_pos = ((*write_pos) & (~mask));
-        if (start_pos>*read_pos)
-        {
-            *read_pos = start_pos;
-            printf("SPMC started, set read_pos=%lld\n", *read_pos);
-        }
     }
 
     void remove()

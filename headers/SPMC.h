@@ -79,13 +79,6 @@ public:
     {
         assert(rid>=0 && rid<max_readers);
         printf("SPMC started, write_pos=%lld, read_high=%lld\n", *write_pos, *read_high);
-        long long start_pos = ((*write_pos) & (~mask));
-        // reader missed too much. You maynot want this.
-        if (start_pos>*read_high)
-        {
-            readers[rid] = start_pos;
-            printf("SPMC started, set read_high=%lld\n", *read_high);
-        }
     }
 
     void clear()

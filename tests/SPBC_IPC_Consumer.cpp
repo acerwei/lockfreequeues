@@ -60,7 +60,7 @@ int main(int argc, char **argv)
                 buf[len] = '\0';
                 cout<<buf<<" "<<len<<" "<<received<<endl;
                 if (wait)
-                    std::this_thread::sleep_for(chrono::microseconds(1));
+                    std::this_thread::sleep_for(chrono::seconds(1));
             }
         }
     }

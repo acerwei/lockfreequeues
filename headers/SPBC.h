@@ -55,7 +55,7 @@ public:
         assert(buf);
         if (readers[rid] >= *write_pos)
             return 0;
-        long long start_pos = ((*write_pos) & (~mask));
+        long long start_pos = (*write_pos - size);
         if (readers[rid]<start_pos)
         {
             printf("SPBC lagged, should call keepup, start_pos=%lld, write_pos=%lld, read_pos=%lld, lost=%lld\n", start_pos, *write_pos, readers[rid], start_pos-readers[rid]);
@@ -82,16 +82,8 @@ public:
     {
         assert(rid>=0 && rid<max_readers);
         printf("SPBC started, write_pos=%lld, read_pos=%lld\n", *write_pos, readers[rid]);
-        long long start_pos = ((*write_pos) & (~mask));
-        // reader missed too much.
-        // potential problem when lagging exactly one buf_size behind.
+        // reader might have missed too much.
         // better to call keep_up(rid) right after start.
-        if (start_pos>readers[rid])
-        {
-            readers[rid] = start_pos;
-            printf("SPBC started, set read_pos=%lld\n", readers[rid]);
-        }
-    
     }
 
     void keep_up(int rid)
