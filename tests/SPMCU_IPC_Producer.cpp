@@ -2,7 +2,7 @@
     CopyRight (c) acer.king.wei@gmail.com 2019
 */
 
-#include "../headers/SPMC.h"
+#include "../headers/SPMCU.h"
 using namespace std;
 
 int main(int argc, char **argv)
@@ -16,9 +16,9 @@ int main(int argc, char **argv)
     int pid = std::atoi(argv[2]);
     int n = std::atoi(argv[3]);
     int bufSize = std::atoi(argv[4]);
-    cout<<"Topic = "<<argv[1]<<", Pid = "<< argv[2]<<", MaxReaders = " <<n <<", BuffSize = "<<bufSize<<endl;
+    cout<<"Topic = "<<argv[1]<<", Pid = "<< argv[2]<<",MaxReaders = " <<n <<", BuffSize = "<<bufSize<<endl;
     //
-    SPMC<MemType_IPC> *shipc = new SPMC<MemType_IPC>(argv[1], (char)(pid&0xff), n, bufSize);
+    SPMCU<MemType_IPC, double> *shipc = new SPMCU<MemType_IPC, double>(argv[1], (char)(pid&0xff), n, bufSize);
     if (argc>=6 && !strcmp(argv[5], "remove"))
     {
         shipc->remove();
@@ -29,15 +29,15 @@ int main(int argc, char **argv)
         shipc->clear();
     }
 
-    string str;
+    double val;
     while (true)
     {
-        cin>>str;
-        while (!shipc->push(str.length(), str.c_str()))
+        cin>>val;
+        while (!shipc->push(val))
         {
             std::this_thread::sleep_for(chrono::nanoseconds(1));
         }
-        printf("sent %lu bytes\n", str.length());
+        printf("sent item\n");
     }
     delete shipc;
     std::this_thread::sleep_for(chrono::seconds(1));

@@ -35,7 +35,7 @@ public:
 
     ~SPBCBase(){}
 
-    bool push(int len, const char* buf)
+    bool push(uint16_t len, const char* buf)
     {
         assert(len + LenBytes <= tailer);
         memmove(data + (*write_pos&mask), &len, LenBytes);
@@ -62,7 +62,7 @@ public:
             keep_up(rid);
             return 0;
         }
-        int len = 0;
+        uint16_t len = 0;
         memmove(&len, data + (readers[rid]&mask), LenBytes);
         memmove(buf, data + ((readers[rid]+LenBytes)&mask), len);
         readers[rid] += (len + LenBytes);
@@ -73,7 +73,7 @@ public:
     template <typename itemT>
     size_t pop(int rid, itemT &item)
     {
-        int len = pop(rid, (char*)(&item));
+        size_t len = pop(rid, (char*)(&item));
         assert(!len || len == sizeof(itemT));
         return len;
     }

@@ -16,8 +16,9 @@
 using namespace std;
 
 #define fetch_add(x, v) __sync_fetch_and_add(x, v)
+#define fetch_or(x, v) __sync_fetch_and_or(x, v)
+#define HighBit 0x8000
 
-template<typename itemT>
 class SPMCBase
 {
 protected:
@@ -31,14 +32,14 @@ protected:
     int mask;
 
 public:
-    static const size_t ItemSize = sizeof(itemT);
+    static const size_t LenBytes = sizeof(uint16_t);
 
 public:
     SPMCBase(){}
 
     ~SPMCBase(){}
 
-    bool push(const itemT &item)
+    bool push(uint16_t len, const char* buf)
     {
         long long read_low = *read_high; // in case all readers are idling
         for (int i=0; i<max_readers; i++)
@@ -49,30 +50,51 @@ public:
             long long temp = readers[i];
             if (temp>=0 && temp<read_low) read_low = temp;
         }
-        if (read_low>=0 && *write_pos + ItemSize > read_low + size)
+        if (read_low>=0 && *write_pos + +len+LenBytes > read_low + size)
         {
             //printf("SPMC buffer full write_pos=%lld, read_low=%lld\n", *write_pos, read_low);
             return false;
         }
-        memmove(data + (*write_pos &mask), &item, ItemSize);
-        (*write_pos) += ItemSize;
+        memmove(data + (*write_pos&mask), &len, LenBytes);
+        memmove(data + ((*write_pos+LenBytes)&mask), buf, len);
+        (*write_pos) += (len+LenBytes);
         return true;
     }
 
-    // eager read
-    size_t pop(int rid, itemT &item)
+    template <typename itemT>
+    bool push(const itemT &item)
+    {
+        return push(sizeof(itemT), (const char*)(&item));
+    }
+
+    size_t pop(int rid, char *buf)
     {
         if (*read_high>=*write_pos)
             return 0;
-        readers[rid] = fetch_add(read_high, ItemSize);
-        // eagering, it has to read this item; otherwise the item will be lost.
-        // TO IMPROVE.
-        while (readers[rid]>=*write_pos)
-            std::this_thread::sleep_for(chrono::nanoseconds(1));
+        long long read_pos = readers[rid] = *read_high;
+        //compete overhead
+        uint16_t *lenp = (uint16_t*) (data + (readers[rid]&mask));
+        uint16_t len = fetch_or(lenp, HighBit);
+        if (len & HighBit) //loser
+        {
+            readers[rid] = -1;
+            return 0;
+        }
         // reading
-        memmove(&item, data + (readers[rid]&mask), ItemSize);
+        cout<<len<<endl;
+        fetch_add(read_high, len + LenBytes);
+        memmove(buf, data + ((read_pos+LenBytes)&mask), len);
         readers[rid] = -1;
-        return ItemSize;
+        return len;
+    }
+
+    // use this if you know exactly what the item is about
+    template <typename itemT>
+    size_t pop(int rid, itemT &item)
+    {
+        size_t len = pop(rid, (char*)(&item));
+        assert(!len || len == sizeof(itemT));
+        return len;
     }
 
     void start(int rid)
@@ -91,46 +113,44 @@ public:
     }
 };
 
-template <MemTypeT memType, typename itemT>
+template <MemTypeT memType>
 class SPMC;
 
-template <typename itemT>
-class SPMC<MemType_SingleProcess, itemT> : public SPMCBase<itemT>
+template<>
+class SPMC<MemType_SingleProcess> : public SPMCBase
 {
 public:
     SPMC(int _size, int _max_readers, int _tailer=DefaultTailerSize)
     {
-        this->size = _size;
-        this->max_readers = _max_readers;
-        this->tailer = _tailer;
-        assert(this->ItemSize <= this->tailer);
-        this->mask = this->size - 1;
-        assert(!(this->mask & this->size));
+        size = _size;
+        max_readers = _max_readers;
+        tailer = _tailer;
+        mask = size - 1;
+        assert(!(mask & size));
         //
-        this->write_pos = new long long;
-        this->readers = new long long[this->max_readers];
-        this->read_high = new long long;
-        this->data = new char[this->size + this->tailer];
-        *this->write_pos = 0;
-        memset(this->readers, 0, sizeof(long long) * this->max_readers);
-        *this->read_high = 0;
+        write_pos = new long long;
+        readers = new long long[max_readers];
+        read_high = new long long;
+        data = new char[size + tailer];
+        *write_pos = 0;
+        memset(readers, 0, sizeof(long long) * max_readers);
+        *read_high = 0;
     }
 
     ~SPMC()
     {
-        if (this->data)
+        if (data)
         {
-            delete this->write_pos;
-            delete this->readers;
-            delete this->read_high;
-            delete this->data;
+            delete write_pos;
+            delete readers;
+            delete read_high;
+            delete data;
         }
     }
 };
 
-
-template<typename itemT>
-class SPMC<MemType_IPC, itemT> : public SPMCBase<itemT>
+template<>
+class SPMC<MemType_IPC> : public SPMCBase
 {
 protected:
     string name;
@@ -144,12 +164,11 @@ public:
     SPMC(const char* _name, const char _pid, int _max_readers, const int _size, const int _tailer=DefaultTailerSize):
         name(_name), pid(_pid)
     {
-        this->size = _size;
-        this->tailer = _tailer;
-        assert(this->ItemSize <= this->tailer);
-        this->max_readers = _max_readers;
-        this->mask = this->size - 1;
-        assert(!(this->mask & this->size));
+        size = _size;
+        tailer = _tailer;
+        max_readers = _max_readers;
+        mask = size - 1;
+        assert(!(mask & size));
         init();
     }
 
@@ -166,17 +185,17 @@ public:
     {
         key = ftok(name.c_str(), pid);
         assert(key!=-1);
-        int acquire_size = this->size + this->tailer + sizeof(long long)*(this->max_readers+1);
+        int acquire_size = size + tailer + sizeof(long long)*(max_readers+1);
         shmid = shmget(key, acquire_size, 0666 | IPC_CREAT);
         assert(shmid!=-1);
         shdata = (char*) shmat(shmid, nullptr, 0);
         assert(shdata);
         //
-        this->write_pos = (long long*) shdata;
-        this->readers = (long long*) (shdata + sizeof(long long));
-        this->read_high = (long long*) (shdata + sizeof(long long)*(this->max_readers+1));
-        this->data = shdata + sizeof(long long)*(this->max_readers+2);
-        printf("IPC SPMC started, write_pos=%lld, read_high=%lld\n", *this->write_pos, *this->read_high);
+        write_pos = (long long*) shdata;
+        readers = (long long*) (shdata + sizeof(long long));
+        read_high = (long long*) (shdata + sizeof(long long)*(max_readers+1));
+        data = shdata + sizeof(long long)*(max_readers+2);
+        printf("IPC SPMC started, write_pos=%lld, read_high=%lld\n", *write_pos, *read_high);
     }
 
     void remove()
@@ -194,3 +213,6 @@ public:
         }
     }
 };
+
+#undef fetch_add
+#undef fetch_or

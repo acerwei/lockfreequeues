@@ -32,7 +32,7 @@ public:
 
     ~SPSCBase(){}
 
-    bool push(int len, const char* buf)
+    bool push(uint16_t len, const char* buf)
     {
         assert(len + LenBytes <= tailer);
         if (*write_pos+len+LenBytes > *read_pos+size)
@@ -54,7 +54,7 @@ public:
         assert(buf);
         if (*read_pos >= *write_pos)
             return 0;
-        int len = 0;
+        uint16_t len = 0;
         memmove(&len, data + (*read_pos&mask), LenBytes);
         memmove(buf, data + ((*read_pos+LenBytes)&mask), len);
         *read_pos += (len + LenBytes);
@@ -65,7 +65,7 @@ public:
     template <typename itemT>
     size_t pop(itemT &item)
     {
-        int len = pop((char*)(&item));
+        size_t len = pop((char*)(&item));
         assert(!len || len == sizeof(itemT));
         return len;
     }

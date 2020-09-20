@@ -2,7 +2,7 @@
     CopyRight (c) acer.king.wei@gmail.com 2019
 */
 
-#include "../headers/SPMC.h"
+#include "../headers/SPMCU.h"
 using namespace std;
 
 int main(int argc, char **argv)
@@ -17,24 +17,26 @@ int main(int argc, char **argv)
     int n = std::atoi(argv[3]);
     int bufSize = std::atoi(argv[4]);
     int rid = std::atoi(argv[5]);
-    cout<<"Topic = "<<argv[1]<<", Pid = "<< argv[2]<<", MaxReaders = " <<n <<", BuffSize = "<<bufSize<<endl;
+    cout<<"Topic = "<<argv[1]<<", Pid = "<< argv[2]<<",MaxReaders = " <<n <<", BuffSize = "<<bufSize<<endl;
     cout<<"My Reader ID is "<<rid<<endl;
     //
-    SPMC<MemType_IPC> *shipc = new SPMC<MemType_IPC>(argv[1], (char)(pid&0xff), n, bufSize);
+    SPMCU<MemType_IPC, double> *shipc = new SPMCU<MemType_IPC, double>(argv[1], (char)(pid&0xff), n, bufSize);
     shipc->start(rid);
-    char buf[64];
     int received = 0;
+    double val = 0;
     while (true)
     {
-        size_t len = shipc->pop(rid, buf);
-        if (!len)
-            std::this_thread::sleep_for(chrono::nanoseconds(1));
-        else
+        size_t len = shipc->pop(rid, val);
+        if (len)
         {
             received++;
-            buf[len] = '\0';
-            cout<<buf<<" "<<len<<" "<<received<<endl;
+            cout<<val<<" "<<received<<endl;
         }
+        else
+        {
+            std::this_thread::sleep_for(chrono::nanoseconds(1));
+        }
+        
     }
     
     delete shipc;
