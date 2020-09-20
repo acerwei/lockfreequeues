@@ -81,8 +81,8 @@ public:
             return 0;
         }
         // reading
-        cout<<len<<endl;
-        fetch_add(read_high, len + LenBytes);
+        read_pos = fetch_add(read_high, len + LenBytes);
+        assert(read_pos == readers[rid]); //shouldn't have changed.
         memmove(buf, data + ((read_pos+LenBytes)&mask), len);
         readers[rid] = -1;
         return len;
