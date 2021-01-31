@@ -24,9 +24,9 @@ protected:
     int size = 0;
     int max_readers;
     int tailer = 0;
-    long long *write_pos = nullptr;
-    long long *readers = nullptr;
-    long long *read_high = nullptr;
+    volatile long long *write_pos = nullptr;
+    volatile long long *readers = nullptr;
+    volatile long long *read_high = nullptr;
     char* data = nullptr;
     int mask;
 
@@ -112,7 +112,8 @@ public:
         this->read_high = new long long;
         this->data = new char[this->size + this->tailer];
         *this->write_pos = 0;
-        memset(this->readers, 0, sizeof(long long) * this->max_readers);
+        for (int i=0; i<max_readers; i++)
+            this->readers[i] = 0;
         *this->read_high = 0;
     }
 

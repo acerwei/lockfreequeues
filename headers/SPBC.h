@@ -22,8 +22,8 @@ protected:
     int size = 0;
     int max_readers;
     int tailer = 0;
-    long long *write_pos = nullptr;
-    long long *readers = nullptr;
+    volatile long long *write_pos = nullptr;
+    volatile long long *readers = nullptr;
     char* data = nullptr;
     int mask;
 
@@ -120,7 +120,8 @@ public:
         readers = new long long[max_readers];
         data = new char[size+tailer];
         *write_pos = 0;
-        memset(readers, 0, sizeof(long long)*max_readers);
+        for (int i=0; i<max_readers; i++)
+            readers[i] = 0;
     }
 
     ~SPBC()

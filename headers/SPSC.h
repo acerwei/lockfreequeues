@@ -20,7 +20,8 @@ class SPSCBase
 protected:
     int size = 0;
     int tailer = 0;
-    long long *write_pos = nullptr, *read_pos = nullptr;
+    volatile long long *write_pos = nullptr
+    volatile long long *read_pos = nullptr;
     char* data = nullptr;
     int mask;
 
